@@ -19,60 +19,77 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create":
             return UserRegistrationSerializer
         return UserProfileSerializer
 
-    @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated, IsOwnerOrAdmin])
+    @action(
+        detail=False,
+        methods=["get", "patch"],
+        permission_classes=[IsAuthenticated, IsOwnerOrAdmin],
+    )
     def me(self, request):
-        if request.method == 'GET':
+        if request.method == "GET":
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
-        elif request.method == 'PATCH':
-            serializer = self.get_serializer(request.user, data=request.data, partial=True)
+        elif request.method == "PATCH":
+            serializer = self.get_serializer(
+                request.user, data=request.data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
 
 
 def register(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, 'Регистрация прошла успешно!')
-            return redirect('task_list')
+            messages.success(request, "Регистрация прошла успешно!")
+            return redirect("task_list")
     else:
         form = UserRegistrationForm()
-    return render(request, 'users/register.html', {'form': form})
+    return render(request, "users/register.html", {"form": form})
 
 
 @login_required
 def profile(request):
-    from tasks.models import Task  # Импортируем здесь, чтобы избежать циклических импортов
+    from tasks.models import (
+        Task,
+    )  # Импортируем здесь, чтобы избежать циклических импортов
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Профиль успешно обновлен!')
-            return redirect('profile')
+            messages.success(request, "Профиль успешно обновлен!")
+            return redirect("profile")
     else:
         form = UserProfileForm(instance=request.user)
 
     total_tasks = Task.objects.filter(executor=request.user).count()
-    in_progress_tasks = Task.objects.filter(executor=request.user, status='in_progress').count()
-    completed_tasks = Task.objects.filter(executor=request.user, status='completed').count()
+    in_progress_tasks = Task.objects.filter(
+        executor=request.user, status="in_progress"
+    ).count()
+    completed_tasks = Task.objects.filter(
+        executor=request.user, status="completed"
+    ).count()
 
-    return render(request, 'users/profile.html', {
-        'form': form,
-        'total_tasks': total_tasks,
-        'in_progress_tasks': in_progress_tasks,
-        'completed_tasks': completed_tasks
-    })
+    return render(
+        request,
+        "users/profile.html",
+        {
+            "form": form,
+            "total_tasks": total_tasks,
+            "in_progress_tasks": in_progress_tasks,
+            "completed_tasks": completed_tasks,
+        },
+    )
+
 
 def custom_logout(request):
     logout(request)
-    messages.info(request, 'Вы успешно вышли из системы.')
-    return redirect('home')
+    messages.info(request, "Вы успешно вышли из системы.")
+    return redirect("home")
