@@ -1,20 +1,13 @@
-from django.contrib import messages
-from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework import filters, viewsets
 
 from .filters import TaskFilter
-from .forms import UserRegistrationForm, UserProfileForm
+from .forms import TaskForm
 from .models import Task
-from .models import User
 from .permissions import IsAuthorOrExecutorOrAdmin
 from .serializers import TaskSerializer
-from .serializers import UserRegistrationSerializer, UserProfileSerializer
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -27,46 +20,61 @@ class TaskViewSet(viewsets.ModelViewSet):
     ordering_fields = ['created_at', 'due_date', 'priority']
 
     def get_queryset(self):
-        # Базовая оптимизация: prefetch_related для FK
         queryset = Task.objects.select_related('executor', 'author').all()
-        # Если пользователь не админ, показываем только связанные с ним задачи
         if self.request.user.role not in ['admin', 'manager']:
             queryset = queryset.filter(executor=self.request.user)
         return queryset
 
     def perform_create(self, serializer):
-        # Автор задачи проставляется автоматически в сериализаторе
         serializer.save()
 
 
-# HTML Views
-def register(request):
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Регистрация прошла успешно!')
-            return redirect('task_list')
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'users/register.html', {'form': form})
+@login_required
+def task_list(request):
+    tasks = Task.objects.filter(executor=request.user)
+    return render(request, 'tasks/task_list.html', {'tasks': tasks})
 
 
 @login_required
-def profile(request):
+def task_detail(request, pk):
+    from .models import Task
+    task = Task.objects.get(pk=pk)
+    return render(request, 'tasks/task_detail.html', {'task': task})
+
+
+@login_required
+def task_create(request):
     if request.method == 'POST':
-        form = UserProfileForm(request.POST, instance=request.user)
+        form = TaskForm(request.POST)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.author = request.user
+            task.save()
+            messages.success(request, 'Задача успешно создана!')
+            return redirect('task_list')
+    else:
+        form = TaskForm()
+    return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Создать задачу'})
+
+
+@login_required
+def task_update(request, pk):
+    from .models import Task
+    task = Task.objects.get(pk=pk)
+    if request.method == 'POST':
+        form = TaskForm(request.POST, instance=task)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Профиль успешно обновлен!')
-            return redirect('profile')
+            messages.success(request, 'Задача успешно обновлена!')
+            return redirect('task_list')
     else:
-        form = UserProfileForm(instance=request.user)
-    return render(request, 'users/profile.html', {'form': form})
+        form = TaskForm(instance=task)
+    return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Редактировать задачу'})
 
 
 def home(request):
+    from .models import Task
+
     if request.user.is_authenticated:
         total_tasks = Task.objects.filter(executor=request.user).count()
         in_progress_tasks = Task.objects.filter(executor=request.user, status='in_progress').count()
@@ -79,15 +87,3 @@ def home(request):
         })
     else:
         return render(request, 'home.html')
-
-# API Views
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return UserRegistrationSerializer
-        return UserProfileSerializer
-

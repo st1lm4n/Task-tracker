@@ -1,8 +1,13 @@
+from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import redirect, render
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from .forms import UserRegistrationForm, UserProfileForm
 from .models import User
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
 from .serializers import UserRegistrationSerializer, UserProfileSerializer
@@ -19,7 +24,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get', 'patch'], permission_classes=[IsAuthenticated, IsOwnerOrAdmin])
     def me(self, request):
-        # Обработка эндпоинта .../api/users/me/
         if request.method == 'GET':
             serializer = self.get_serializer(request.user)
             return Response(serializer.data)
@@ -30,8 +34,23 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
 
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Регистрация прошла успешно!')
+            return redirect('task_list')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'users/register.html', {'form': form})
+
+
 @login_required
 def profile(request):
+    from tasks.models import Task  # Импортируем здесь, чтобы избежать циклических импортов
+
     if request.method == 'POST':
         form = UserProfileForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -41,7 +60,6 @@ def profile(request):
     else:
         form = UserProfileForm(instance=request.user)
 
-    # Добавляем статистику для отображения в профиле
     total_tasks = Task.objects.filter(executor=request.user).count()
     in_progress_tasks = Task.objects.filter(executor=request.user, status='in_progress').count()
     completed_tasks = Task.objects.filter(executor=request.user, status='completed').count()
