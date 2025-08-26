@@ -1,8 +1,8 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, viewsets
-
+from django.contrib import messages
 from .filters import TaskFilter
 from .forms import TaskForm
 from .models import Task
@@ -44,6 +44,8 @@ def task_detail(request, pk):
 
 @login_required
 def task_create(request):
+    from users.models import User
+
     if request.method == 'POST':
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -54,12 +56,22 @@ def task_create(request):
             return redirect('task_list')
     else:
         form = TaskForm()
-    return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Создать задачу'})
+
+    # Получаем всех пользователей для выпадающего списка
+    users = User.objects.all()
+
+    return render(request, 'tasks/task_form.html', {
+        'form': form,
+        'title': 'Создать задачу',
+        'users': users  # Передаем пользователей в шаблон
+    })
 
 
 @login_required
 def task_update(request, pk):
     from .models import Task
+    from users.models import User
+
     task = Task.objects.get(pk=pk)
     if request.method == 'POST':
         form = TaskForm(request.POST, instance=task)
@@ -69,7 +81,15 @@ def task_update(request, pk):
             return redirect('task_list')
     else:
         form = TaskForm(instance=task)
-    return render(request, 'tasks/task_form.html', {'form': form, 'title': 'Редактировать задачу'})
+
+    # Получаем всех пользователей для выпадающего списка
+    users = User.objects.all()
+
+    return render(request, 'tasks/task_form.html', {
+        'form': form,
+        'title': 'Редактировать задачу',
+        'users': users  # Передаем пользователей в шаблон
+    })
 
 
 def home(request):

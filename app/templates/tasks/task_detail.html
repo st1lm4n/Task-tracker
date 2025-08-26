@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ task.title }} - Task Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">{{ task.title }}</h4>
+                    <span class="badge bg-{% if task.status == 'completed' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                        {{ task.get_status_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5>Описание</h5>
+                    <p class="text-muted">{{ task.description|linebreaksbr }}</p>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user me-2"></i>Исполнитель</h6>
+                        <p>{{ task.executor.username }} ({{ task.executor.get_role_display }})</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-user-edit me-2"></i>Автор</h6>
+                        <p>{{ task.author.username }} ({{ task.author.get_role_display }})</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-flag me-2"></i>Приоритет</h6>
+                        <span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}info{% endif %}">
+                            {{ task.get_priority_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar me-2"></i>Срок выполнения</h6>
+                        <p>{{ task.due_date|date:"d.m.Y H:i"|default:"Не указан" }}</p>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-plus me-2"></i>Создана</h6>
+                        <p>{{ task.created_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-check me-2"></i>Обновлена</h6>
+                        <p>{{ task.updated_at|date:"d.m.Y H:i" }}</p>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'task_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Назад к списку
+                    </a>
+                    <div>
+                        <a href="{% url 'task_update' task.pk %}" class="btn btn-primary me-2">
+                            <i class="fas fa-edit me-2"></i>Редактировать
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

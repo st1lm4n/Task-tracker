@@ -6,7 +6,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from django.contrib.auth import logout
+from django.contrib import messages
 from .forms import UserRegistrationForm, UserProfileForm
 from .models import User
 from .permissions import IsAdminOrReadOnly, IsOwnerOrAdmin
@@ -70,3 +71,8 @@ def profile(request):
         'in_progress_tasks': in_progress_tasks,
         'completed_tasks': completed_tasks
     })
+
+def custom_logout(request):
+    logout(request)
+    messages.info(request, 'Вы успешно вышли из системы.')
+    return redirect('home')

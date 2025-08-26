@@ -157,3 +157,8 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'A system for tracking employee tasks',
     'VERSION': '1.0.0',
 }
+
+# Перенаправление после входа
+LOGIN_REDIRECT_URL = '/profile/'  # Перенаправление на страницу профиля
+LOGIN_URL = '/login/'  # URL для входа
+LOGOUT_REDIRECT_URL = '/'  # Перенаправление после выхода
