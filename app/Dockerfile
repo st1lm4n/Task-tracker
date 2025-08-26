@@ -10,7 +10,7 @@ COPY ./requirements.txt .
 
 # Устанавливаем зависимости
 RUN pip install --upgrade pip
-& pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Теперь копируем ВСЕ остальные файлы проекта
 COPY . .
