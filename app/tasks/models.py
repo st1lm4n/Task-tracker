@@ -32,6 +32,24 @@ class Task(models.Model):
         on_delete=models.CASCADE,
         related_name="authored_tasks",
     )
+    # Новое поле: ссылка на родительскую задачу
+    parent_task = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="subtasks"
+    )
 
     def __str__(self):
         return self.title
+
+    @property
+    def has_subtasks_in_progress(self):
+        """Проверяет, есть ли у задачи подзадачи в работе"""
+        return self.subtasks.filter(status="in_progress").exists()
+
+    @property
+    def active_subtasks_count(self):
+        """Количество активных подзадач (не завершенных)"""
+        return self.subtasks.exclude(status="completed").count()
