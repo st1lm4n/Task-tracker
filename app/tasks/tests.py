@@ -34,9 +34,7 @@ class TaskAPITestCase(APITestCase):
 
         # Создаем родительскую задачу
         parent_task = Task.objects.create(
-            title="Parent Task",
-            executor=self.employee,
-            author=self.admin
+            title="Parent Task", executor=self.employee, author=self.admin
         )
 
         # Создаем подзадачу
@@ -44,7 +42,7 @@ class TaskAPITestCase(APITestCase):
         data = {
             "title": "Child Task",
             "executor": self.employee.id,
-            "parent_task": parent_task.id
+            "parent_task": parent_task.id,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -64,19 +62,16 @@ class TaskAPITestCase(APITestCase):
             title="Task 1",
             executor=self.employee,
             author=self.admin,
-            status="in_progress"
+            status="in_progress",
         )
         Task.objects.create(
             title="Task 2",
             executor=self.employee,
             author=self.admin,
-            status="in_progress"
+            status="in_progress",
         )
         Task.objects.create(
-            title="Task 3",
-            executor=self.employee2,
-            author=self.admin,
-            status="new"
+            title="Task 3", executor=self.employee2, author=self.admin, status="new"
         )
 
         url = reverse("busy_employees")
@@ -88,22 +83,25 @@ class TaskAPITestCase(APITestCase):
         self.assertEqual(len(employees_data), 3)  # admin, employee, employee2
 
         # Находим employee в ответе
-        employee_data = next(emp for emp in employees_data if emp["employee"]["username"] == "employee")
-        employee2_data = next(emp for emp in employees_data if emp["employee"]["username"] == "employee2")
+        employee_data = next(
+            emp for emp in employees_data if emp["employee"]["username"] == "employee"
+        )
+        employee2_data = next(
+            emp for emp in employees_data if emp["employee"]["username"] == "employee2"
+        )
 
         self.assertEqual(employee_data["active_tasks_count"], 2)
         self.assertEqual(employee2_data["active_tasks_count"], 1)
-        self.assertGreater(employee_data["active_tasks_count"], employee2_data["active_tasks_count"])
+        self.assertGreater(
+            employee_data["active_tasks_count"], employee2_data["active_tasks_count"]
+        )
 
     def test_important_tasks_endpoint(self):
         self.client.force_login(self.admin)
 
         # Создаем родительскую задачу (не в работе)
         parent_task = Task.objects.create(
-            title="Parent Task",
-            executor=self.employee,
-            author=self.admin,
-            status="new"
+            title="Parent Task", executor=self.employee, author=self.admin, status="new"
         )
 
         # Создаем подзадачу (в работе)
@@ -112,7 +110,7 @@ class TaskAPITestCase(APITestCase):
             executor=self.employee,
             author=self.admin,
             status="in_progress",
-            parent_task=parent_task
+            parent_task=parent_task,
         )
 
         url = reverse("task-important", kwargs={})
@@ -140,9 +138,7 @@ class TaskModelTestCase(APITestCase):
     def test_task_has_subtasks_in_progress(self):
         # Создаем родительскую задачу
         parent_task = Task.objects.create(
-            title="Parent Task",
-            executor=self.employee,
-            author=self.admin
+            title="Parent Task", executor=self.employee, author=self.admin
         )
 
         # Создаем подзадачу не в работе
@@ -151,7 +147,7 @@ class TaskModelTestCase(APITestCase):
             executor=self.employee,
             author=self.admin,
             parent_task=parent_task,
-            status="new"
+            status="new",
         )
 
         # Проверяем, что нет подзадач в работе
@@ -163,7 +159,7 @@ class TaskModelTestCase(APITestCase):
             executor=self.employee,
             author=self.admin,
             parent_task=parent_task,
-            status="in_progress"
+            status="in_progress",
         )
 
         # Проверяем, что есть подзадачи в работе
@@ -172,9 +168,7 @@ class TaskModelTestCase(APITestCase):
     def test_active_subtasks_count(self):
         # Создаем родительскую задачу
         parent_task = Task.objects.create(
-            title="Parent Task",
-            executor=self.employee,
-            author=self.admin
+            title="Parent Task", executor=self.employee, author=self.admin
         )
 
         # Создаем подзадачи
@@ -183,21 +177,21 @@ class TaskModelTestCase(APITestCase):
             executor=self.employee,
             author=self.admin,
             parent_task=parent_task,
-            status="new"
+            status="new",
         )
         Task.objects.create(
             title="Child Task 2",
             executor=self.employee,
             author=self.admin,
             parent_task=parent_task,
-            status="in_progress"
+            status="in_progress",
         )
         Task.objects.create(
             title="Child Task 3",
             executor=self.employee,
             author=self.admin,
             parent_task=parent_task,
-            status="completed"
+            status="completed",
         )
 
         # Проверяем количество активных подзадач (исключая завершенные)

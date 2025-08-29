@@ -37,31 +37,39 @@ class TaskViewSet(viewsets.ModelViewSet):
         serializer.save()
 
     # Специальный эндпоинт для важных задач
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=["get"])
     def important(self, request):
         # Задачи, которые не взяты в работу, но от которых зависят другие задачи, взятые в работу
         important_tasks = Task.objects.filter(
             status="new",  # Не взяты в работу
-            subtasks__status="in_progress"  # Есть подзадачи в работе
+            subtasks__status="in_progress",  # Есть подзадачи в работе
         ).distinct()
 
         result = []
         for task in important_tasks:
             # Находим наименее загруженных сотрудников
             least_busy_employees = User.objects.annotate(
-                task_count=Count('tasks', filter=Q(tasks__status__in=['new', 'in_progress', 'review']))
-            ).order_by('task_count')[:5]  # 5 наименее загруженных
+                task_count=Count(
+                    "tasks",
+                    filter=Q(tasks__status__in=["new", "in_progress", "review"]),
+                )
+            ).order_by("task_count")[
+                :5
+            ]  # 5 наименее загруженных
 
             # Проверяем исполнителя родительской задачи
             parent_task_assignee = None
             if task.parent_task and task.parent_task.executor:
                 parent_assignee = task.parent_task.executor
                 parent_task_count = parent_assignee.tasks.filter(
-                    status__in=['new', 'in_progress', 'review']
+                    status__in=["new", "in_progress", "review"]
                 ).count()
 
                 # Если у исполнителя родительской задачи не больше чем на 2 задачи больше чем у наименее загруженного
-                if least_busy_employees and parent_task_count <= least_busy_employees[0].task_count + 2:
+                if (
+                    least_busy_employees
+                    and parent_task_count <= least_busy_employees[0].task_count + 2
+                ):
                     parent_task_assignee = parent_assignee
 
             # Формируем список рекомендуемых исполнителей
@@ -74,58 +82,66 @@ class TaskViewSet(viewsets.ModelViewSet):
                 if employee not in suggested_assignees:
                     suggested_assignees.append(employee)
 
-            result.append({
-                "task": {
-                    "id": task.id,
-                    "title": task.title,
-                    "due_date": task.due_date,
-                },
-                "suggested_assignees": [
-                    {
-                        "id": emp.id,
-                        "username": emp.username,
-                        "full_name": f"{emp.first_name} {emp.last_name}".strip() or emp.username,
-                        "role": emp.get_role_display(),
-                        "current_task_count": emp.tasks.filter(
-                            status__in=['new', 'in_progress', 'review']
-                        ).count()
-                    }
-                    for emp in suggested_assignees[:3]  # Не более 3 рекомендаций
-                ]
-            })
+            result.append(
+                {
+                    "task": {
+                        "id": task.id,
+                        "title": task.title,
+                        "due_date": task.due_date,
+                    },
+                    "suggested_assignees": [
+                        {
+                            "id": emp.id,
+                            "username": emp.username,
+                            "full_name": f"{emp.first_name} {emp.last_name}".strip()
+                            or emp.username,
+                            "role": emp.get_role_display(),
+                            "current_task_count": emp.tasks.filter(
+                                status__in=["new", "in_progress", "review"]
+                            ).count(),
+                        }
+                        for emp in suggested_assignees[:3]  # Не более 3 рекомендаций
+                    ],
+                }
+            )
 
         return Response(result)
 
 
 # Эндпоинт для занятых сотрудников
-@api_view(['GET'])
+@api_view(["GET"])
 def busy_employees(request):
     # Список сотрудников и их задачи, отсортированный по количеству активных задач
     employees = User.objects.annotate(
-        active_tasks_count=Count('tasks', filter=Q(tasks__status__in=['new', 'in_progress', 'review']))
-    ).order_by('-active_tasks_count')
+        active_tasks_count=Count(
+            "tasks", filter=Q(tasks__status__in=["new", "in_progress", "review"])
+        )
+    ).order_by("-active_tasks_count")
 
     result = []
     for employee in employees:
-        tasks = employee.tasks.filter(status__in=['new', 'in_progress', 'review'])
-        result.append({
-            "employee": {
-                "id": employee.id,
-                "username": employee.username,
-                "full_name": f"{employee.first_name} {employee.last_name}".strip() or employee.username,
-                "role": employee.get_role_display(),
-            },
-            "active_tasks_count": employee.active_tasks_count,
-            "tasks": [
-                {
-                    "id": task.id,
-                    "title": task.title,
-                    "status": task.get_status_display(),
-                    "due_date": task.due_date,
-                }
-                for task in tasks
-            ]
-        })
+        tasks = employee.tasks.filter(status__in=["new", "in_progress", "review"])
+        result.append(
+            {
+                "employee": {
+                    "id": employee.id,
+                    "username": employee.username,
+                    "full_name": f"{employee.first_name} {employee.last_name}".strip()
+                    or employee.username,
+                    "role": employee.get_role_display(),
+                },
+                "active_tasks_count": employee.active_tasks_count,
+                "tasks": [
+                    {
+                        "id": task.id,
+                        "title": task.title,
+                        "status": task.get_status_display(),
+                        "due_date": task.due_date,
+                    }
+                    for task in tasks
+                ],
+            }
+        )
 
     return Response(result)
 

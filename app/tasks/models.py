@@ -34,11 +34,7 @@ class Task(models.Model):
     )
     # Новое поле: ссылка на родительскую задачу
     parent_task = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="subtasks"
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="subtasks"
     )
 
     def __str__(self):
