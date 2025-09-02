@@ -12,6 +12,8 @@ then
     echo "PostgreSQL started"
 fi
 
+python manage.py makemigrations
+
 # Применение миграций
 python manage.py migrate --noinput
 
