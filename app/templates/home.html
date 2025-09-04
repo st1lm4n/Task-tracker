@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Task Tracker - Управление задачами{% endblock %}
+
+{% block content %}
+<div class="row align-items-center min-vh-50 py-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold mb-4">Эффективное управление задачами вашей команды</h1>
+        <p class="lead mb-4">Task Tracker помогает организовать работу, отслеживать прогресс и повышать продуктивность вашей команды.</p>
+        
+        {% if user.is_authenticated %}
+            <a href="{% url 'task_list' %}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-tasks me-2"></i>Мои задачи
+            </a>
+            <a href="{% url 'profile' %}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-user me-2"></i>Мой профиль
+            </a>
+        {% else %}
+            <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-user-plus me-2"></i>Начать сейчас
+            </a>
+            <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Войти
+            </a>
+        {% endif %}
+    </div>
+    <div class="col-lg-6 text-center">
+        <img src="/app/static/images/task-management.svg" alt="Task Management" class="img-fluid" style="max-height: 400px;">
+    </div>
+</div>
+
+{% if user.is_authenticated %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">Быстрый обзор</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-center border-0 shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Всего задач</h5>
+                        <p class="card-text display-6">{{ total_tasks }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-center border-0 shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-spinner fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">В работе</h5>
+                        <p class="card-text display-6">{{ in_progress_tasks }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card text-center border-0 shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Завершено</h5>
+                        <p class="card-text display-6">{{ completed_tasks }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row mt-5">
+    <div class="col-md-4 mb-4">
+        <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body">
+                <i class="fas fa-clock fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Экономия времени</h5>
+                <p class="card-text">Сократите время на управление задачами и увеличьте продуктивность команды.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Отслеживание прогресса</h5>
+                <p class="card-text">Наглядные отчеты и статистика выполнения задач.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card text-center border-0 shadow-sm h-100">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Командная работа</h5>
+                <p class="card-text">Улучшите коммуникацию и координацию в вашей команде.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Важные задачи - Task Tracker{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1><i class="fas fa-exclamation-triangle me-2"></i>Важные задачи</h1>
+    <p class="text-muted">Задачи, которые не взяты в работу, но от которых зависят другие задачи</p>
+    
+    {% for item in important_tasks %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">{{ item.task.title }}</h5>
+        </div>
+        <div class="card-body">
+            <p><strong>Описание:</strong> {{ item.task.description|truncatewords:30 }}</p>
+            <p><strong>Статус:</strong> <span class="badge bg-secondary">{{ item.task.get_status_display }}</span></p>
+            <p><strong>Срок:</strong> {{ item.task.due_date|date:"d.m.Y H:i"|default:"Не указан" }}</p>
+            
+            <h6>Рекомендуемые исполнители:</h6>
+            <ul>
+                {% for assignee in item.suggested_assignees %}
+                <li>
+                    {{ assignee.username }} ({{ assignee.get_role_display }})
+                    - {{ assignee.active_tasks_count }} активных задач
+                </li>
+                {% empty %}
+                <li>Нет доступных рекомендаций</li>
+                {% endfor %}
+            </ul>
+            
+            <a href="{% url 'task_update' item.task.pk %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-edit me-1"></i>Назначить исполнителя
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        На данный момент нет важных задач, требующих внимания.
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
