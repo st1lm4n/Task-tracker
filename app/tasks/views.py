@@ -1,17 +1,20 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets, status
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
+from django.shortcuts import redirect
+from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, viewsets
+from rest_framework.decorators import action
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from users.models import User
+
 from .filters import TaskFilter
 from .forms import TaskForm
 from .models import Task
 from .permissions import IsAuthorOrExecutorOrAdmin
 from .serializers import TaskSerializer
-from users.models import User
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -67,8 +70,8 @@ class TaskViewSet(viewsets.ModelViewSet):
 
                 # Если у исполнителя родительской задачи не больше чем на 2 задачи больше чем у наименее загруженного
                 if (
-                    least_busy_employees
-                    and parent_task_count <= least_busy_employees[0].task_count + 2
+                        least_busy_employees
+                        and parent_task_count <= least_busy_employees[0].task_count + 2
                 ):
                     parent_task_assignee = parent_assignee
 
@@ -94,7 +97,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                             "id": emp.id,
                             "username": emp.username,
                             "full_name": f"{emp.first_name} {emp.last_name}".strip()
-                            or emp.username,
+                                         or emp.username,
                             "role": emp.get_role_display(),
                             "current_task_count": emp.tasks.filter(
                                 status__in=["new", "in_progress", "review"]
@@ -127,7 +130,7 @@ def busy_employees(request):
                     "id": employee.id,
                     "username": employee.username,
                     "full_name": f"{employee.first_name} {employee.last_name}".strip()
-                    or employee.username,
+                                 or employee.username,
                     "role": employee.get_role_display(),
                 },
                 "active_tasks_count": employee.active_tasks_count,
@@ -242,3 +245,39 @@ def home(request):
         )
     else:
         return render(request, "home.html")
+
+
+@login_required
+def busy_employees_page(request):
+    """HTML-страница для отображения занятых сотрудников"""
+    # Можно получить данные через API или напрямую из базы
+    from django.db.models import Count, Q
+    from users.models import User
+
+    employees = User.objects.annotate(
+        tasks_count=Count('tasks', filter=Q(tasks__status='active'))
+    ).order_by('-tasks_count')[:10]
+
+    context = {'employees': employees}
+    return render(request, 'tasks/busy_employees.html', context)
+
+
+@login_required
+def important_tasks_page(request):
+    """HTML-страница для отображения важных задач"""
+    # Получаем важные задачи через наш API алгоритм
+    important_tasks = Task.objects.filter(
+        status="new",
+        subtasks__status="in_progress"
+    ).distinct()
+
+    # Добавляем логику для рекомендаций (как в API)
+    result = []
+    for task in important_tasks:
+        # ... (код для формирования рекомендаций как в API) ...
+        result.append({
+            "task": task,
+            "suggested_assignees": []  # Заполняется логикой рекомендаций
+        })
+
+    return render(request, "tasks/important_tasks.html", {"important_tasks": result})

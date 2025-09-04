@@ -1,14 +1,12 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-task_tracker_db}
-      - POSTGRES_USER=${POSTGRES_USER:-task_tracker_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tasktrackerpassword}
+      POSTGRES_DB: task_tracker_db
+      POSTGRES_USER: task_tracker_user
+      POSTGRES_PASSWORD: tasktrackerpassword
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-task_tracker_user}"]
       interval: 5s
@@ -28,12 +26,11 @@ services:
     expose:
       - "8000:8000"
     environment:
-      - POSTGRES_NAME=${POSTGRES_DB:-task_tracker_db}
-      - POSTGRES_USER=${POSTGRES_USER:-task_tracker_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tasktrackerpassword}
+      - POSTGRES_DB=task_tracker_db
+      - POSTGRES_USER=task_tracker_user
+      - POSTGRES_PASSWORD=tasktrackerpassword
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
-      - DEBUG=${DEBUG:-0}
     depends_on:
       db:
         condition: service_healthy

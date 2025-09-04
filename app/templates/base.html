@@ -18,6 +18,8 @@
                 {% if user.is_authenticated %}
                     <span class="navbar-text me-3">Привет, {{ user.username }}!</span>
                     <a class="nav-link" href="{% url 'task_list' %}">Задачи</a>
+                    <a class="nav-link" href="{% url 'busy_employees_page' %}">Занятые сотрудники</a>
+                    <a class="nav-link" href="{% url 'important_tasks_page' %}">Важные задачи</a>
                     <a class="nav-link" href="{% url 'profile' %}">Профиль</a>
                     <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
                 {% else %}

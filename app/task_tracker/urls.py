@@ -4,8 +4,9 @@ from django.contrib.auth import views as auth_views
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from users.views import register, profile
+from users.views import register, profile, custom_logout
 from tasks.views import home, task_list, task_detail, task_create, task_update
+from tasks.views import busy_employees_page, important_tasks_page  # Добавляем импорт
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -15,6 +16,9 @@ urlpatterns = [
     path("tasks/<int:pk>/", task_detail, name="task_detail"),
     path("tasks/create/", task_create, name="task_create"),
     path("tasks/<int:pk>/edit/", task_update, name="task_update"),
+    # Новые страницы
+    path("busy-employees/", busy_employees_page, name="busy_employees_page"),
+    path("important-tasks/", important_tasks_page, name="important_tasks_page"),
     # Auth Views
     path("register/", register, name="register"),
     path(
@@ -22,7 +26,7 @@ urlpatterns = [
         auth_views.LoginView.as_view(template_name="users/login.html"),
         name="login",
     ),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("logout/", custom_logout, name="logout"),
     path("profile/", profile, name="profile"),
     # API Endpoints
     path(
